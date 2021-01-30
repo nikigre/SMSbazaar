@@ -7,3 +7,5 @@ We got the idea that users could reserve items that they like. We decided to use
 Backend is made in PHP and MySQL, so you need this two.
 # Why is this published?
 This is published publicly so you can se a practical example of using [SMSsenderAPI](https://github.com/nikigre/SMSsenderAPI "SMSsenderAPI").
+# Wanna try it out?
+You can. Upload all files to your web server, import database, fix db.php acordingly ant that is all!
