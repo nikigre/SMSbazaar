@@ -1,42 +1,36 @@
 <?php
-$MAXizdelkov = 20;
+$MAXizdelkov = 7;
 $sporociloObNeuspeliRezervaciji = "Pozdravljeni!\nArtikel %s je že rezerviran. Izberite drugega.\nHvala, OŠ Petrovče";
 $sporociloObUspeliRezervaciji   = "Pozdravljeni!\nArtikel %s je rezerviran za vas!\nHvala, OŠ Petrovče";
 $sporociloObNapaki              = "Pozdravljeni!\nZgodila se je napaka. Poskusite ponovno kasneje.\nHvala, OŠ Petrovče";
 $sporociloObPrevecIzdelkih      = "Pozdravljeni!\nRezervirate lahko največ $MAXizdelkov izdelkov.\nLep pozdrav, OŠ Petrovče";
 $sporociloNeObstaja             = "Pozdravljeni!\nArtikel ne obstaja.\nLep pozdrav, OŠ Petrovče";
+
+
 //Pošlje POST na API in vrne na novo prejeto sporočilo
-$url  = 'https://dev.nikigre.si/sms/api.php';
-$data = array(
-    'func' => '0001',
-    'user' => 'username'
-);
-
-
+$url = 'https://sms.nikigre.si/getOneSMS?key=fkvfg677lvwjekftdgvm';
 $options = array(
     'http' => array(
-        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-        'method' => 'POST',
-        'content' => http_build_query($data)
+        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method'  => 'GET'
     )
 );
 
-$context = stream_context_create($options);
-$result  = file_get_contents($url, false, $context);
+$context  = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
 
+$data = json_decode($result, true);
 
-if ($result != "NO RECEIVED SMS") {
-    //Iz rezultata dobi telefonsko številko in iskanje in ju shrani
-    $polje = explode("'", $result);
-    
-    $stevilka = $polje[3];
-    $iskanje  = $polje[5];
+if($data["SMS"] != null)
+{
+    $stevilka = $data["SMS"]["Sender"];
+    $iskanje  = $data["SMS"]["Content"];
     $iskanje = preg_replace("/[^0-9]/", "", $iskanje);
     
 
     if(VrniAliJeNeZaseden($iskanje))
     {   
-        if(KolikoIzdelkovZeIma($stevilka) <= $MAXizdelkov)
+        if(KolikoIzdelkovZeIma($stevilka) < $MAXizdelkov)
         {
             $tmp = RezervirajIzdelek($iskanje, $stevilka);
             if($tmp == "true")
@@ -65,35 +59,26 @@ if ($result != "NO RECEIVED SMS") {
 //Pošlje SMS na določeno številko in vrne OK če je poslano
 function PosljiSMS($tel, $sms)
 {
-    $url  = 'https://dev.nikigre.si/sms/api.php';
-    $data = array(
-        'func' => '1000',
-        'user' => 'username',
-        'message' => $sms,
-        'phone' => $tel
-    );
-    
+    $url = 'https://sms.nikigre.si/sendSMS';
+    $data = array('key' => 'fkvfg677lvwjekftdgvm', 'message' => $sms, 'phone' => $tel);
+
+
     $options = array(
         'http' => array(
-            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method' => 'POST',
+            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method'  => 'POST',
             'content' => http_build_query($data)
         )
     );
-    $context = stream_context_create($options);
-    $result  = file_get_contents($url, false, $context);
-    
-    if ($result === FALSE) {
-        echo $result;
-    } else {
-        echo "OK";
-    }
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    echo $result;
 }
 
 function VrniAliJeNeZaseden($ID)
 {
     include "db.php";
-    $sql="SELECT `ID_rezervacija` FROM `RezervacijaArtikel` WHERE IDArtikel=" . $ID;
+    $sql="SELECT `ID_rezervacija` FROM `RezervacijaArtikel` WHERE IDArtikel=" . mysqli_real_escape_string($conn, $ID);
     
     //echo $sql;
     
@@ -112,7 +97,7 @@ function RezervirajIzdelek($ID, $stevilka)
 {
     include "db.php";
     
-    $sql = "INSERT INTO `RezervacijaArtikel`(`IDArtikel`, `TelefonskaStevilka`) VALUES (" . $ID . ", '" . $stevilka . "')";
+    $sql = "INSERT INTO `RezervacijaArtikel`(`IDArtikel`, `TelefonskaStevilka`) VALUES (" . mysqli_real_escape_string($conn, $ID) . ", '" . mysqli_real_escape_string($conn, $stevilka) . "')";
     
     //echo $sql;
     
@@ -137,7 +122,7 @@ function KolikoIzdelkovZeIma($stevilka)
 {
     include "db.php";
 
-    $sql="SELECT COUNT(`ID_rezervacija`) 'ST' FROM `RezervacijaArtikel` WHERE TelefonskaStevilka ='" . $stevilka . "';";
+    $sql="SELECT COUNT(`ID_rezervacija`) 'ST' FROM `RezervacijaArtikel` WHERE TelefonskaStevilka ='" . mysqli_real_escape_string($conn, $stevilka) . "';";
     
     echo $sql;
     

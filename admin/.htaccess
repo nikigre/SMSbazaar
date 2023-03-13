@@ -5,7 +5,7 @@
 #----------------------------------------------------------------cp:ppd
 AuthType Basic
 AuthName "SMS amdin"
-AuthUserFile "/admin/passwd"
+AuthUserFile "/home/nikigre/.htpasswds/bazar.os-petrovce.si/admin/passwd"
 Require valid-user
 #----------------------------------------------------------------cp:ppd
 # End section managed by cPanel: Password Protected Directories -cp:ppd
